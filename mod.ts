@@ -5,6 +5,8 @@ export interface MultiResult {
   failedKeys?: Deno.KvKey[];
 }
 
+const MAX_TRANSACTION_SIZE = 10;
+
 /**
  * Set multiple key value pairs into the KV store
  * @param keyValues Map of key value pairs to insert
@@ -21,7 +23,7 @@ export async function multiSet(
   for (const [key, value] of keyValues) {
     atomic.set(key, value);
     keysInAction.push(key);
-    if (++count == 10) {
+    if (++count == MAX_TRANSACTION_SIZE) {
       try {
         await atomic.commit();
       } catch (e) {
@@ -51,7 +53,9 @@ export async function multiSet(
  * @returns object with ok property indicating success or failure and optional failedKeys
  *          property containing keys that failed to delete
  */
-export async function multiDelete(source: Deno.KvKey[] | Deno.KvListSelector): Promise<MultiResult> {
+export async function multiDelete(
+  source: Deno.KvKey[] | Deno.KvListSelector,
+): Promise<MultiResult> {
   let atomic = kv.atomic();
   let count = 0;
   let keysInAction = [];
@@ -69,7 +73,7 @@ export async function multiDelete(source: Deno.KvKey[] | Deno.KvListSelector): P
   for (const key of keys) {
     atomic.delete(key);
     keysInAction.push(key);
-    if (++count == 10) {
+    if (++count == MAX_TRANSACTION_SIZE) {
       try {
         await atomic.commit();
       } catch (e) {

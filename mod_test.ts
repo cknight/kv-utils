@@ -1,6 +1,13 @@
 import { assertEquals } from "https://deno.land/std@0.193.0/testing/asserts.ts";
 import { test } from "./test_deps.ts";
-import { multiDelete, multiSet, count, countAll, wipeKvStore, MultiResult } from "./mod.ts";
+import {
+  count,
+  countAll,
+  multiDelete,
+  MultiResult,
+  multiSet,
+  wipeKvStore,
+} from "./mod.ts";
 
 test({
   name: "No keys added - empty map",
@@ -23,7 +30,7 @@ test({
       await multiSet(new Map([[["asdf"], "asdf"]]));
       assertEquals(await countAll(), 1);
     });
-  }
+  },
 });
 
 test({
@@ -39,7 +46,7 @@ test({
       await multiSet(keyValues);
       assertEquals(await countAll(), 10);
     });
-  }
+  },
 });
 
 test({
@@ -47,7 +54,7 @@ test({
   async fn(t) {
     await resetDatabase(t);
     await insert115Keys(t);
-  }
+  },
 });
 
 test({
@@ -59,7 +66,7 @@ test({
       await multiDelete([]);
       assertEquals(await countAll(), 115);
     });
-  }
+  },
 });
 
 test({
@@ -71,7 +78,7 @@ test({
       await multiDelete([["key", 1]]);
       assertEquals(await countAll(), 114);
     });
-  }
+  },
 });
 
 test({
@@ -87,7 +94,7 @@ test({
       await multiDelete(keys);
       assertEquals(await countAll(), 105);
     });
-  }
+  },
 });
 
 test({
@@ -107,7 +114,7 @@ test({
       await multiDelete(keys);
       assertEquals(await countAll(), 1);
     });
-  }
+  },
 });
 
 test({
@@ -116,10 +123,10 @@ test({
     await resetDatabase(t);
     await insert115Keys(t);
     await t.step("0 keys deleted from list", async () => {
-      await multiDelete({prefix: ["doesNotExist"]});
+      await multiDelete({ prefix: ["doesNotExist"] });
       assertEquals(await countAll(), 115);
     });
-  }
+  },
 });
 
 test({
@@ -128,10 +135,10 @@ test({
     await resetDatabase(t);
     await insert115Keys(t);
     await t.step("1 key deleted from list", async () => {
-      await multiDelete({prefix: ["key"], end: ["key", 1]});
+      await multiDelete({ prefix: ["key"], end: ["key", 1] });
       assertEquals(await countAll(), 114);
     });
-  }
+  },
 });
 
 test({
@@ -140,10 +147,10 @@ test({
     await resetDatabase(t);
     await insert115Keys(t);
     await t.step("10 keys deleted from list", async () => {
-      await multiDelete({prefix: ["key"], end: ["key", 10]});
+      await multiDelete({ prefix: ["key"], end: ["key", 10] });
       assertEquals(await countAll(), 105);
     });
-  }
+  },
 });
 
 test({
@@ -152,10 +159,10 @@ test({
     await resetDatabase(t);
     await insert115Keys(t);
     await t.step("115 keys deleted from list", async () => {
-      await multiDelete({prefix: ["key"]});
+      await multiDelete({ prefix: ["key"] });
       assertEquals(await countAll(), 0);
     });
-  }
+  },
 });
 
 test({
@@ -164,9 +171,9 @@ test({
     await resetDatabase(t);
     await insert115Keys(t);
     await t.step("count 0 keys", async () => {
-      assertEquals(await count({prefix: ["doesNotExist"]}), 0);
+      assertEquals(await count({ prefix: ["doesNotExist"] }), 0);
     });
-  }
+  },
 });
 
 test({
@@ -175,9 +182,9 @@ test({
     await resetDatabase(t);
     await insert115Keys(t);
     await t.step("count 1 key", async () => {
-      assertEquals(await count({prefix: ["key"], end: ["key", 1]}), 1);
+      assertEquals(await count({ prefix: ["key"], end: ["key", 1] }), 1);
     });
-  }
+  },
 });
 
 test({
@@ -186,12 +193,12 @@ test({
     await resetDatabase(t);
     await insert115Keys(t);
     await t.step("count 10 keys", async () => {
-      assertEquals(await count({prefix: ["key"], end: ["key", 10]}), 10);
+      assertEquals(await count({ prefix: ["key"], end: ["key", 10] }), 10);
     });
-  }
+  },
 });
 
-async function resetDatabase(t:Deno.TestContext) {
+async function resetDatabase(t: Deno.TestContext) {
   await t.step("Reset database", async () => {
     await wipeKvStore();
     assertEquals(await countAll(), 0);

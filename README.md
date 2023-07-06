@@ -6,7 +6,7 @@ Collection of utilities for working with Deno KV.
 Set multiple key/value pairs into KV. Sets are grouped together into transactions for higher performance than setting individually.
 
 ```ts
-const keyValues = new Map();
+const keyValues = new Map<Deno.KvKey, unknown>();
 for (let i = 0; i < 100; i++) {
   keyValues.set(["key", i], `value-${i}`);
 }

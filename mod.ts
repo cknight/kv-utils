@@ -1,17 +1,19 @@
 const kv = await Deno.openKv();
 
-export interface BulkResult {
+export interface MultiResult {
   ok: boolean;
   failedKeys?: Deno.KvKey[];
 }
 
 /**
- * Bulk insert key value pairs into the KV store
+ * Set multiple key value pairs into the KV store
  * @param keyValues Map of key value pairs to insert
  * @returns object with ok property indicating success or failure and optional failedKeys
  *          property containing keys that failed to insert
  */
-export async function bulkSet(keyValues: Map<Deno.KvKey, unknown>): Promise<BulkResult> {
+export async function multiSet(
+  keyValues: Map<Deno.KvKey, unknown>,
+): Promise<MultiResult> {
   let atomic = kv.atomic();
   let count = 0;
   let keysInAction = [];
@@ -27,7 +29,7 @@ export async function bulkSet(keyValues: Map<Deno.KvKey, unknown>): Promise<Bulk
       }
       atomic = kv.atomic();
       count = 0;
-      keysInAction = [];        
+      keysInAction = [];
     }
   }
   if (count > 0) {
@@ -38,20 +40,31 @@ export async function bulkSet(keyValues: Map<Deno.KvKey, unknown>): Promise<Bulk
     }
   }
 
-  return failedKeys.length > 0 ? {ok: false, failedKeys: failedKeys} : {ok: true};
+  return failedKeys.length > 0
+    ? { ok: false, failedKeys: failedKeys }
+    : { ok: true };
 }
 
 /**
- * Bulk delete key value pairs from the KV store
- * @param keys list of keys to delete
+ * Delete multiple key value pairs from the KV store based on array of keys or a list selector
+ * @param source list of keys to delete or prefix selector
  * @returns object with ok property indicating success or failure and optional failedKeys
  *          property containing keys that failed to delete
  */
-export async function bulkDelete(keys:Deno.KvKey[]): Promise<BulkResult> {
+export async function multiDelete(source: Deno.KvKey[] | Deno.KvListSelector): Promise<MultiResult> {
   let atomic = kv.atomic();
   let count = 0;
   let keysInAction = [];
   const failedKeys: Deno.KvKey[] = [];
+  let keys: Deno.KvKey[] = [];
+
+  if (source instanceof Array) {
+    keys = source;
+  } else {
+    for await (const entry of kv.list(source)) {
+      keys.push(entry.key);
+    }
+  }
 
   for (const key of keys) {
     atomic.delete(key);
@@ -75,22 +88,9 @@ export async function bulkDelete(keys:Deno.KvKey[]): Promise<BulkResult> {
     }
   }
 
-  return failedKeys.length > 0 ? {ok: false, failedKeys: failedKeys} : {ok: true};
-}
-
-/**
- * Bulk delete key value pairs from the KV store based on a prefix selector
- * @param prefix prefix of keys to delete
- * @returns object with ok property indicating success or failure and optional failedKeys
- *          property containing keys that failed to delete
- */
-export async function bulkDeleteFromList(prefix: Deno.KvListSelector): Promise<BulkResult> {
-  const keys = [];
-  for await (const entry of kv.list(prefix)) {
-    keys.push(entry.key);
-  }
-
-  return bulkDelete(keys);
+  return failedKeys.length > 0
+    ? { ok: false, failedKeys: failedKeys }
+    : { ok: true };
 }
 
 /**
@@ -98,8 +98,8 @@ export async function bulkDeleteFromList(prefix: Deno.KvListSelector): Promise<B
  * @returns object with ok property indicating success or failure and optional failedKeys
  *          property containing keys that failed to delete
  */
-export async function wipeKvStore(): Promise<BulkResult> {
-  return await bulkDeleteFromList({prefix: []});
+export async function wipeKvStore(): Promise<MultiResult> {
+  return await multiDelete({ prefix: [] });
 }
 
 /**
@@ -120,10 +120,13 @@ export async function count(prefix: Deno.KvListSelector): Promise<number> {
  * @returns number of keys
  */
 export async function countAll(): Promise<number> {
-  return await count({prefix: []});
+  return await count({ prefix: [] });
 }
 
-async function retrySetIndividually(keys: Deno.KvKey[], keyValues: Map<Deno.KvKey, unknown>): Promise<Deno.KvKey[]> {
+async function retrySetIndividually(
+  keys: Deno.KvKey[],
+  keyValues: Map<Deno.KvKey, unknown>,
+): Promise<Deno.KvKey[]> {
   const failedKeys = [];
   for (const key of keys) {
     try {
@@ -135,7 +138,9 @@ async function retrySetIndividually(keys: Deno.KvKey[], keyValues: Map<Deno.KvKe
   return failedKeys;
 }
 
-async function retryDeleteIndividually(keys: Deno.KvKey[]): Promise<Deno.KvKey[]> {
+async function retryDeleteIndividually(
+  keys: Deno.KvKey[],
+): Promise<Deno.KvKey[]> {
   const failedKeys = [];
   for (const key of keys) {
     try {

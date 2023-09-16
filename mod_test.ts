@@ -62,7 +62,7 @@ test({
   async fn(t) {
     await resetDatabase(t);
     await t.step("Max transaction size reached but not exceeded", async () => {
-      const largeValue = 'a'.repeat(Math.floor((819000 - 1024*64)/1000));
+      const largeValue = "a".repeat(Math.floor((819000 - 1024 * 64) / 1000));
       const keyValues = new Map();
       for (let i = 0; i < 1000; i++) {
         keyValues.set([`key${i}`], largeValue);
@@ -74,7 +74,7 @@ test({
 
     await resetDatabase(t);
     await t.step("Max transaction size exceeded", async () => {
-      const largeValue = 'a'.repeat(1024*64-8);
+      const largeValue = "a".repeat(1024 * 64 - 8);
       const keyValues = new Map();
       for (let i = 0; i < 1000; i++) {
         keyValues.set([`key${i}`], largeValue);
@@ -83,8 +83,8 @@ test({
       assertEquals(result.ok, true);
       assertEquals(await countAll(), 1000);
     });
-  }
-})
+  },
+});
 
 test({
   name: "0 keys deleted",
@@ -241,31 +241,34 @@ test({
         }
         return origDenoOpenKv(path);
       };
-  
+
       await t.step("Populate remote database", async () => {
         for (let i = 0; i < 1015; i++) {
           inMemKv.set([`remoteKey`, i], `value${i}`);
         }
         let count = 0;
-        for await (const _ of inMemKv.list({prefix: []})) {
+        for await (const _ of inMemKv.list({ prefix: [] })) {
           count++;
         }
         assertEquals(count, 1015);
       });
-  
+
       await insert1015Keys(t);
-  
-      await t.step("Replace entire local database with remote data", async () => {
-        const result = await replaceLocalDataWithRemote(":memory:");
-        assertEquals(result.ok, true);
-        assertEquals(await countAll(), 1015);
-        assertEquals(await count({ prefix: ["remoteKey"] }), 1015);
-      });
-      } finally {
-        Deno.openKv = origDenoOpenKv;
-        inMemKv.close();
-      }
-  }
+
+      await t.step(
+        "Replace entire local database with remote data",
+        async () => {
+          const result = await replaceLocalDataWithRemote(":memory:");
+          assertEquals(result.ok, true);
+          assertEquals(await countAll(), 1015);
+          assertEquals(await count({ prefix: ["remoteKey"] }), 1015);
+        },
+      );
+    } finally {
+      Deno.openKv = origDenoOpenKv;
+      inMemKv.close();
+    }
+  },
 });
 
 test({
@@ -284,38 +287,41 @@ test({
         }
         return origDenoOpenKv(path);
       };
-  
+
       await t.step("Populate remote database", async () => {
         for (let i = 0; i < 1015; i++) {
           inMemKv.set([`key`, i], `remote value${i}`);
         }
         let count = 0;
-        for await (const _ of inMemKv.list({prefix: []})) {
+        for await (const _ of inMemKv.list({ prefix: [] })) {
           count++;
         }
         assertEquals(count, 1015);
       });
-  
+
       await insert1015Keys(t);
       await kv.set(["keep", "this", "key"], "value");
 
-      await t.step("Replace matching local database keys with remote data", async () => {
-        const result = await replaceLocalDataWithRemote(":memory:", [{prefix: ["key"]}]);
-        assertEquals(result.ok, true);
-        assertEquals(await countAll(), 1016);
-        assertEquals(await count({ prefix: ["key"] }), 1015);
-        assertEquals(await count({ prefix: ["keep"] }), 1);
-        assertEquals((await kv.get(["key", 1])).value, "remote value1");
-      });
-      } finally {
-        Deno.openKv = origDenoOpenKv;
-        inMemKv.close();
-        kv.close();
-      }
-  }
+      await t.step(
+        "Replace matching local database keys with remote data",
+        async () => {
+          const result = await replaceLocalDataWithRemote(":memory:", [{
+            prefix: ["key"],
+          }]);
+          assertEquals(result.ok, true);
+          assertEquals(await countAll(), 1016);
+          assertEquals(await count({ prefix: ["key"] }), 1015);
+          assertEquals(await count({ prefix: ["keep"] }), 1);
+          assertEquals((await kv.get(["key", 1])).value, "remote value1");
+        },
+      );
+    } finally {
+      Deno.openKv = origDenoOpenKv;
+      inMemKv.close();
+      kv.close();
+    }
+  },
 });
-
-
 
 async function resetDatabase(t: Deno.TestContext) {
   await t.step("Reset database", async () => {

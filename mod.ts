@@ -6,7 +6,7 @@ export interface MultiResult {
 }
 
 const MAX_NUM_TRANSACTIONS = 1000;
-const MAX_KV_VALUE_SIZE = 1024*64; //bytes (64kb)
+const MAX_KV_VALUE_SIZE = 1024 * 64; //bytes (64kb)
 const MAX_TRANSACTION_SIZE = 819000; //bytes
 const SIZE_LIMIT = MAX_TRANSACTION_SIZE - MAX_KV_VALUE_SIZE;
 
@@ -141,10 +141,10 @@ export async function countAll(): Promise<number> {
  * KV store and replaced with any matching prefixed key/values from the remote KV store.
  * If no prefixes are supplied, all keys are deleted from the local KV store and
  * replaced with all key/values from the remote KV store.  NOTE: this requires that
- * you have a personal access token (PAT) associated with the remote KV store, setup as 
+ * you have a personal access token (PAT) associated with the remote KV store, setup as
  * an environment variable named DENO_KV_ACCESS_TOKEN.
  * @param remoteKvUrl Connection URL of remote KV store
- * @param prefixes Optional list of prefixes to delete and populate from remote KV store. 
+ * @param prefixes Optional list of prefixes to delete and populate from remote KV store.
  *                 Defaults to all keys.
  * @returns object with ok property indicating success or failure and optional list of failedKeys
  */
@@ -191,10 +191,14 @@ export async function replaceLocalDataWithRemote(
   const result = await multiSet(data);
 
   if (!result.ok) {
-    console.log(`Failed to set ${failedKeys.length} keys from remote KV store.`);
+    console.log(
+      `Failed to set ${failedKeys.length} keys from remote KV store.`,
+    );
     failedKeys.push(...result.failedKeys!);
   }
-  console.log(`Added ${data.size - failedKeys.length} entries to local KV store.`);
+  console.log(
+    `Added ${data.size - failedKeys.length} entries to local KV store.`,
+  );
 
   return failedKeys.length > 0
     ? { ok: false, failedKeys: failedKeys }

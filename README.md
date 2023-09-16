@@ -66,8 +66,8 @@ if (!result.ok) {
 ## replaceLocalDataWithRemote
 
 This utility will either:
-1. Delete all your local KV data, and replace it with all data at a remote KV instance
-2. Delete all your local KV data matching any prefix passed in (preserving any data which does not
+1. Delete all local KV data, and replace it with all data at a remote KV instance
+2. Delete all local KV data matching any prefix passed in (preserving any data which does not
 match), and inserting any remote KV data which matches any prefix passed in.
 
 Replace all local data with remote data:

@@ -6,7 +6,7 @@ export interface MultiResult {
 }
 
 const MAX_NUM_TRANSACTIONS = 1000;
-const MAX_KV_VALUE_SIZE = 1024*64; //bytes
+const MAX_KV_VALUE_SIZE = 1024*64; //bytes (64kb)
 const MAX_TRANSACTION_SIZE = 819000; //bytes
 const SIZE_LIMIT = MAX_TRANSACTION_SIZE - MAX_KV_VALUE_SIZE;
 

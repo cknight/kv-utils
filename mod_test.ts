@@ -58,6 +58,35 @@ test({
 });
 
 test({
+  name: "Max transaction size",
+  async fn(t) {
+    await resetDatabase(t);
+    await t.step("Max transaction size reached but not exceeded", async () => {
+      const largeValue = 'a'.repeat(Math.floor((819000 - 1024*64)/1000));
+      const keyValues = new Map();
+      for (let i = 0; i < 1000; i++) {
+        keyValues.set([`key${i}`], largeValue);
+      }
+      const result = await multiSet(keyValues);
+      assertEquals(result.ok, true);
+      assertEquals(await countAll(), 1000);
+    });
+
+    await resetDatabase(t);
+    await t.step("Max transaction size exceeded", async () => {
+      const largeValue = 'a'.repeat(1024*64-8);
+      const keyValues = new Map();
+      for (let i = 0; i < 1000; i++) {
+        keyValues.set([`key${i}`], largeValue);
+      }
+      const result = await multiSet(keyValues);
+      assertEquals(result.ok, true);
+      assertEquals(await countAll(), 1000);
+    });
+  }
+})
+
+test({
   name: "0 keys deleted",
   async fn(t) {
     await resetDatabase(t);

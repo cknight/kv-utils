@@ -13,7 +13,7 @@ setting keys individually.
 import {
   MultiResult,
   multiSet,
-} from "https://deno.land/x/kv_utils@1.1.0/mod.ts";
+} from "https://deno.land/x/kv_utils@1.1.1/mod.ts";
 
 const keyValues = new Map<Deno.KvKey, unknown>();
 for (let i = 0; i < 100; i++) {
@@ -37,7 +37,7 @@ keys individually.
 Delete from an array of keys:
 
 ```ts
-import { multiDelete } from "https://deno.land/x/kv_utils@1.1.0/mod.ts";
+import { multiDelete } from "https://deno.land/x/kv_utils@1.1.1/mod.ts";
 
 const keys: Deno.KvKey[] = [];
 for (let i = 0; i < 100; i++) {
@@ -55,7 +55,7 @@ Or delete all matches from a
 [list selector](https://deno.land/api?unstable=&s=Deno.KvListSelector)
 
 ```ts
-import { multiDelete } from "https://deno.land/x/kv_utils@1.1.0/mod.ts";
+import { multiDelete } from "https://deno.land/x/kv_utils@1.1.1/mod.ts";
 
 const result = await multiDelete({ prefix: ["key"], end: ["key", 7] });
 
@@ -78,7 +78,7 @@ This utility will either:
 Replace all local data with remote data:
 
 ```ts
-import { replaceLocalDataWithRemote } from "https://deno.land/x/kv_utils@1.1.0/mod.ts";
+import { replaceLocalDataWithRemote } from "https://deno.land/x/kv_utils@1.1.1/mod.ts";
 
 const kvUUID = "910c3c46-e7b9-4339-a4ff-41da05ae7f30"; //Replace with your own KV UUID
 const remoteKvUrl = `https://api.deno.com/databases/${kvUUID}/connect`;
@@ -94,7 +94,7 @@ This code will delete all user and session data on the local KV and replace with
 the remote user and session data. Other data is unaffected:
 
 ```ts
-import { replaceLocalDataWithRemote } from "https://deno.land/x/kv_utils@1.1.0/mod.ts";
+import { replaceLocalDataWithRemote } from "https://deno.land/x/kv_utils@1.1.1/mod.ts";
 
 const kvUUID = "910c3c46-e7b9-4339-a4ff-41da05ae7f30"; //Replace with your own KV UUID
 const remoteKvUrl = `https://api.deno.com/databases/${kvUUID}/connect`;
@@ -115,7 +115,7 @@ A shorthand, explicit, way to clear your KV store of all data.
 **Warning**: This will remove all data from your KV store. There is no recovery.
 
 ```ts
-import { wipeKvStore } from "https://deno.land/x/kv_utils@1.1.0/mod.ts";
+import { wipeKvStore } from "https://deno.land/x/kv_utils@1.1.1/mod.ts";
 
 const result = await wipeKvStore();
 
@@ -139,7 +139,7 @@ See also [this issue](https://github.com/denoland/deno/issues/18965) which
 proposes a native count function in KV.
 
 ```ts
-import { count } from "https://deno.land/x/kv_utils@1.1.0/mod.ts";
+import { count } from "https://deno.land/x/kv_utils@1.1.1/mod.ts";
 
 const keyCount = await count({ prefix: ["key"] });
 ```
@@ -153,7 +153,7 @@ separate key entry which gets atomically incremented/decremented in a
 transaction alongside any `set` or `delete` operations.
 
 ```ts
-import { countAll } from "https://deno.land/x/kv_utils@1.1.0/mod.ts";
+import { countAll } from "https://deno.land/x/kv_utils@1.1.1/mod.ts";
 
 const numOfKeys = await countAll();
 ```

@@ -5,7 +5,10 @@ export interface MultiResult {
   failedKeys?: Deno.KvKey[];
 }
 
-const MAX_TRANSACTION_SIZE = 10;
+const MAX_NUM_TRANSACTIONS = 1000;
+const MAX_KV_VALUE_SIZE = 1024*64; //bytes
+const MAX_TRANSACTION_SIZE = 819000; //bytes
+const SIZE_LIMIT = MAX_TRANSACTION_SIZE - MAX_KV_VALUE_SIZE;
 
 /**
  * Set multiple key value pairs into the KV store
@@ -18,12 +21,14 @@ export async function multiSet(
 ): Promise<MultiResult> {
   let atomic = kv.atomic();
   let count = 0;
+  let transactionSize = 0;
   let keysInAction = [];
   const failedKeys: Deno.KvKey[] = [];
   for (const [key, value] of keyValues) {
     atomic.set(key, value);
     keysInAction.push(key);
-    if (++count == MAX_TRANSACTION_SIZE) {
+    transactionSize += computeTransactionSize(value);
+    if (++count == MAX_NUM_TRANSACTIONS || transactionSize > SIZE_LIMIT) {
       try {
         await atomic.commit();
       } catch (e) {
@@ -31,6 +36,7 @@ export async function multiSet(
       }
       atomic = kv.atomic();
       count = 0;
+      transactionSize = 0;
       keysInAction = [];
     }
   }
@@ -58,6 +64,7 @@ export async function multiDelete(
 ): Promise<MultiResult> {
   let atomic = kv.atomic();
   let count = 0;
+  let transactionSize = 0;
   let keysInAction = [];
   const failedKeys: Deno.KvKey[] = [];
   let keys: Deno.KvKey[] = [];
@@ -73,7 +80,8 @@ export async function multiDelete(
   for (const key of keys) {
     atomic.delete(key);
     keysInAction.push(key);
-    if (++count == MAX_TRANSACTION_SIZE) {
+    transactionSize += computeTransactionSize(key);
+    if (++count == MAX_NUM_TRANSACTIONS || transactionSize > SIZE_LIMIT) {
       try {
         await atomic.commit();
       } catch (e) {
@@ -81,6 +89,7 @@ export async function multiDelete(
       }
       atomic = kv.atomic();
       count = 0;
+      transactionSize = 0;
       keysInAction = [];
     }
   }
@@ -127,6 +136,71 @@ export async function countAll(): Promise<number> {
   return await count({ prefix: [] });
 }
 
+/**
+ * If prefixes are supplied, all matching prefixed key entries are deleted from the local
+ * KV store and replaced with any matching prefixed key/values from the remote KV store.
+ * If no prefixes are supplied, all keys are deleted from the local KV store and
+ * replaced with all key/values from the remote KV store.  NOTE: this requires that
+ * you have a personal access token (PAT) associated with the remote KV store, setup as 
+ * an environment variable named DENO_KV_ACCESS_TOKEN.
+ * @param remoteKvUrl Connection URL of remote KV store
+ * @param prefixes Optional list of prefixes to delete and populate from remote KV store. 
+ *                 Defaults to all keys.
+ * @returns object with ok property indicating success or failure and optional list of failedKeys
+ */
+export async function replaceLocalDataWithRemote(
+  remoteKvUrl: string,
+  prefixes?: Deno.KvListSelector[],
+): Promise<MultiResult> {
+  const data: Map<Deno.KvKey, unknown> = new Map();
+  const failedKeys: Deno.KvKey[] = [];
+
+  if (prefixes) {
+    for (const prefix of prefixes) {
+      const result = await multiDelete(prefix);
+      if (!result.ok) {
+        console.log(`Failed to delete all keys for prefix ${prefix}`);
+        failedKeys.push(...result.failedKeys!);
+      }
+    }
+  } else {
+    await wipeKvStore();
+  }
+  const remoteKv = await Deno.openKv(remoteKvUrl);
+
+  if (prefixes) {
+    for (const prefix of prefixes) {
+      for await (
+        const entry of remoteKv.list(prefix, {
+          consistency: "eventual",
+        })
+      ) {
+        data.set(entry.key, entry.value);
+      }
+    }
+  } else {
+    for await (
+      const entry of remoteKv.list({ prefix: [] }, {
+        consistency: "eventual",
+      })
+    ) {
+      data.set(entry.key, entry.value);
+    }
+  }
+
+  const result = await multiSet(data);
+
+  if (!result.ok) {
+    console.log(`Failed to set ${failedKeys.length} keys from remote KV store.`);
+    failedKeys.push(...result.failedKeys!);
+  }
+  console.log(`Added ${data.size - failedKeys.length} entries to local KV store.`);
+
+  return failedKeys.length > 0
+    ? { ok: false, failedKeys: failedKeys }
+    : { ok: true };
+}
+
 async function retrySetIndividually(
   keys: Deno.KvKey[],
   keyValues: Map<Deno.KvKey, unknown>,
@@ -154,4 +228,8 @@ async function retryDeleteIndividually(
     }
   }
   return failedKeys;
+}
+
+function computeTransactionSize(value: unknown): number {
+  return JSON.stringify(value).length;
 }

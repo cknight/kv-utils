@@ -31,7 +31,7 @@ if (!result.ok) {
 
 Delete multiple key/value pairs from KV. Deletes are grouped together into
 transactions for higher performance over deleting individually as this reduces
-network traversal. For large sets of data this is up to 400x faster than setting
+network traversal. For large sets of data this is up to 400x faster than deleting
 keys individually.
 
 Delete from an array of keys:

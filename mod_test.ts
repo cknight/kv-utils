@@ -1,5 +1,4 @@
-import { assertEquals } from "https://deno.land/std@0.193.0/testing/asserts.ts";
-import { test } from "./test_deps.ts";
+import { assertEquals } from "jsr:@std/assert@0.215/assert_equals";
 import {
   count,
   countAll,
@@ -8,6 +7,7 @@ import {
   replaceLocalDataWithRemote,
   wipeKvStore,
 } from "./mod.ts";
+const test = Deno.test;
 
 test({
   name: "No keys added - empty map",

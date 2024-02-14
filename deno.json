@@ -1,0 +1,7 @@
+{
+  "name": "@cknight/kv-utils",
+  "version": "1.2.0",
+  "exports" : {
+    ".": "./mod.ts"
+  }
+}
